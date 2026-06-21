@@ -10,7 +10,13 @@ import uuid
 router = APIRouter(prefix="/predict", tags=["Prediction"])
 
 @router.post("/")
-async def single_prediction(input_data: PredictionInput, authorization: str = Header(...)):
+async def single_prediction(input_data: PredictionInput, authorization: str = Header(None)):
+    if not authorization:
+        raise HTTPException(status_code=401, detail="Authorization header missing")
+    
+    if not authorization.startswith("Bearer "):
+        raise HTTPException(status_code=401, detail="Invalid authorization header format")
+    
     token = authorization.replace("Bearer ", "")
     user = await get_current_user(token)
     
@@ -48,7 +54,13 @@ async def single_prediction(input_data: PredictionInput, authorization: str = He
         raise HTTPException(status_code=500, detail=f"Prediction failed: {str(e)}")
 
 @router.post("/bulk")
-async def bulk_prediction(file: UploadFile = File(...), authorization: str = Header(...)):
+async def bulk_prediction(file: UploadFile = File(...), authorization: str = Header(None)):
+    if not authorization:
+        raise HTTPException(status_code=401, detail="Authorization header missing")
+    
+    if not authorization.startswith("Bearer "):
+        raise HTTPException(status_code=401, detail="Invalid authorization header format")
+    
     token = authorization.replace("Bearer ", "")
     user = await get_current_user(token)
     
@@ -98,7 +110,13 @@ async def bulk_prediction(file: UploadFile = File(...), authorization: str = Hea
         raise HTTPException(status_code=500, detail=f"Bulk prediction failed: {str(e)}")
 
 @router.get("/history")
-async def get_prediction_history(authorization: str = Header(...)):
+async def get_prediction_history(authorization: str = Header(None)):
+    if not authorization:
+        raise HTTPException(status_code=401, detail="Authorization header missing")
+    
+    if not authorization.startswith("Bearer "):
+        raise HTTPException(status_code=401, detail="Invalid authorization header format")
+    
     token = authorization.replace("Bearer ", "")
     user = await get_current_user(token)
     

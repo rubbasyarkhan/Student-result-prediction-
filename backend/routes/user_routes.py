@@ -6,7 +6,13 @@ from bson import ObjectId
 router = APIRouter(prefix="/users", tags=["Users"])
 
 @router.get("/me")
-async def get_current_user_profile(authorization: str = Header(...)):
+async def get_current_user_profile(authorization: str = Header(None)):
+    if not authorization:
+        raise HTTPException(status_code=401, detail="Authorization header missing")
+    
+    if not authorization.startswith("Bearer "):
+        raise HTTPException(status_code=401, detail="Invalid authorization header format")
+    
     token = authorization.replace("Bearer ", "")
     user = await get_current_user(token)
     
@@ -23,7 +29,13 @@ async def get_current_user_profile(authorization: str = Header(...)):
     }
 
 @router.get("/")
-async def get_all_users(authorization: str = Header(...)):
+async def get_all_users(authorization: str = Header(None)):
+    if not authorization:
+        raise HTTPException(status_code=401, detail="Authorization header missing")
+    
+    if not authorization.startswith("Bearer "):
+        raise HTTPException(status_code=401, detail="Invalid authorization header format")
+    
     token = authorization.replace("Bearer ", "")
     user = await get_current_user(token)
     

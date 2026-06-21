@@ -6,7 +6,13 @@ from routes.auth_routes import get_current_user
 router = APIRouter(prefix="/template", tags=["Template"])
 
 @router.get("/download")
-async def download_template(format: str = "csv", authorization: str = Header(...)):
+async def download_template(format: str = "csv", authorization: str = Header(None)):
+    if not authorization:
+        raise HTTPException(status_code=401, detail="Authorization header missing")
+    
+    if not authorization.startswith("Bearer "):
+        raise HTTPException(status_code=401, detail="Invalid authorization header format")
+    
     token = authorization.replace("Bearer ", "")
     user = await get_current_user(token)
     
