@@ -45,11 +45,14 @@ async def single_prediction(input_data: PredictionInput, authorization: str = He
             "message": "Prediction completed successfully",
             "data": {
                 "id": prediction_record["_id"],
-                "prediction": prediction,
+                "prediction": prediction["prediction"],
+                "confidence": prediction["confidence"],
                 "input_data": input_dict,
                 "timestamp": prediction_record["timestamp"]
             }
         }
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=f"Invalid input: {str(e)}")
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Prediction failed: {str(e)}")
 
@@ -94,7 +97,8 @@ async def bulk_prediction(file: UploadFile = File(...), authorization: str = Hea
             result = predictions_collection.insert_one(prediction_record)
             prediction_records.append({
                 "id": str(result.inserted_id),
-                "prediction": prediction,
+                "prediction": prediction["prediction"],
+                "confidence": prediction["confidence"],
                 "input_data": input_data,
                 "timestamp": prediction_record["timestamp"]
             })
@@ -106,6 +110,8 @@ async def bulk_prediction(file: UploadFile = File(...), authorization: str = Hea
             "bulk_id": bulk_id,
             "total_processed": len(predictions)
         }
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=f"Invalid input: {str(e)}")
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Bulk prediction failed: {str(e)}")
 
@@ -131,15 +137,24 @@ async def get_prediction_history(authorization: str = Header(None)):
     
     predictions_data = []
     for pred in predictions:
-        predictions_data.append({
+        prediction_data = {
             "id": str(pred["_id"]),
             "user_id": pred["user_id"],
             "role": pred["role"],
-            "prediction": pred["prediction"],
             "input_data": pred["input_data"],
             "timestamp": pred["timestamp"],
             "bulk_id": pred.get("bulk_id")
-        })
+        }
+        
+        # Handle both old string format and new dict format
+        if isinstance(pred["prediction"], dict):
+            prediction_data["prediction"] = pred["prediction"].get("prediction")
+            prediction_data["confidence"] = pred["prediction"].get("confidence")
+        else:
+            prediction_data["prediction"] = pred["prediction"]
+            prediction_data["confidence"] = None
+        
+        predictions_data.append(prediction_data)
     
     return {
         "success": True,

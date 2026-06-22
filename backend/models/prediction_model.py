@@ -26,6 +26,7 @@ class PredictionResponse(BaseModel):
     role: str
     input_data: Dict[str, Any]
     prediction: str
+    confidence: Optional[float] = None
     timestamp: Optional[datetime] = None
     bulk_id: Optional[str] = None
 
